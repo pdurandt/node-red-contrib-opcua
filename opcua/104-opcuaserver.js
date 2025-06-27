@@ -792,6 +792,8 @@
             var addressSpace = node.server.engine.addressSpace;
             var name;
             var returnValue = "";
+            var parentNodeId = "";
+            var parentNode  ;
 
             switch (payload.opcuaCommand) {
 
@@ -860,7 +862,13 @@
                     var parentFolder = node.server.engine.addressSpace.rootFolder.objects;
                     if (folder) {
                         parentFolder = folder; // Use previously created folder as parentFolder or setFolder() can be used to set parentFolder
-                    }
+                    }  
+
+                    parentNodeId = msg.parentFolder || parentFolder.nodeId; // parentFolder par défaut si pas précisé
+                    parentNode = addressSpace.findNode(parentNodeId);
+ 
+
+
                     // Check & add from msg accessLevel userAccessLevel, role & permissions
                     var accessLevel = opcua.makeAccessLevelFlag("CurrentRead|CurrentWrite"); // Use as default
                     var userAccessLevel = opcua.makeAccessLevelFlag("CurrentRead|CurrentWrite"); // Use as default
@@ -881,16 +889,18 @@
                     
                     // Own namespace
                     if (nodeId.indexOf("ns=1;") >= 0) {
+                        /*
                         parentFolder = node.server.engine.addressSpace.rootFolder.objects;
                         if (folder) {
                             parentFolder = folder; // Use previously created folder as parentFolder or setFolder() can be used to set parentFolder
                         }
+                            */
                         if (browseName.length === 0) {
                             browseName = nodeId.substring(7);
                         }
                         console.log("### nodeId: " + nodeId + " parent: " + parentFolder.nodeId + " description: '" + description + "' browseName: '" + browseName + "'");
                         folder = addressSpace.getOwnNamespace().addObject({
-                            organizedBy: addressSpace.findNode(parentFolder.nodeId),
+                            organizedBy: parentNode , //addressSpace.findNode(parentFolder.nodeId),
                             nodeId: nodeId, // msg.topic,
                             description: description || "",
                             accessLevel: accessLevel, // TEST more
@@ -927,7 +937,7 @@
                             browseName = name.substring(bIndex+3);
                         }
                         folder = ns.addObject({
-                            organizedBy: addressSpace.findNode(parentFolder.nodeId),
+                            organizedBy: parentNode , //addressSpace.findNode(parentFolder.nodeId),
                             nodeId: nodeId, // msg.topic,
                             description: description,
                             accessLevel: accessLevel, // TEST more
@@ -954,6 +964,10 @@
                     if (folder != null) {
                         parentFolder = folder; // Use previous folder as parent or setFolder() can be use to set parent
                     }
+
+                    parentNodeId = msg.parentFolder || parentFolder.nodeId; // parentFolder par défaut si pas précisé
+                    parentNode = addressSpace.findNode(parentNodeId);
+ 
                     var d = msg.topic.indexOf("description=");
                     if (d > 0) {
                         description = msg.topic.substring(d + 12);
@@ -1184,7 +1198,7 @@
                         }
                         verbose_log(chalk.yellow("Using access level: ") + chalk.cyan(accessLevel) + chalk.yellow(" user access level: ") + chalk.cyan(userAccessLevel) + chalk.yellow(" permissions: ") + chalk.cyan(JSON.stringify(permissions)));
                         var newVAR = namespace.addVariable({
-                            organizedBy: addressSpace.findNode(parentFolder.nodeId),
+                            organizedBy: parentNode , //addressSpace.findNode(parentFolder.nodeId),
                             nodeId: name,
                             accessLevel: accessLevel,
                             userAccessLevel: userAccessLevel,
@@ -1310,7 +1324,7 @@
                 case "addMethod":
                     verbose_log("Add method for node: ".concat(msg.topic)); // Example topic format ns=1;s=VariableName;datatype=Double
                     verbose_log("Parameters: " + JSON.stringify(msg));
-                    const parentNode = addressSpace.getOwnNamespace().findNode(msg.topic);
+                    parentNode = addressSpace.getOwnNamespace().findNode(msg.topic);
                     if (!parentNode) {
                         node.error("Method needs parent node, wrong nodeId in the msg.topic: ", msg);
                     }
