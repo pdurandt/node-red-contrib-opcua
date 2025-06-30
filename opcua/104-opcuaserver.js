@@ -714,9 +714,9 @@
                     if (vnode) {
                         verbose_log("Found variable, nodeId: " + vnode.nodeId);
 
-                        variables[variableId] = opcuaBasics.build_new_value_by_datatype(payload.datatype, payload.variableValue);
+                        variables[variableId] = opcuaBasics.build_new_value_by_datatype(payload.dataType, payload.variableValue);
                         // var newValue = opcuaBasics.build_new_variant(payload.datatype, payload.variableValue);
-                        var newValue = opcuaBasics.build_new_dataValue(payload.datatype, payload.variableValue);
+                        var newValue = opcuaBasics.build_new_dataValue(payload.dataType, payload.variableValue);
                         vnode.setValueFromSource(newValue); // This fixes if variable if not bound eq. bindVariables is not called
                         if (payload.quality && payload.sourceTimestamp) {
                             // var statusCode = opcua.StatusCodes.BadDeviceFailure;
