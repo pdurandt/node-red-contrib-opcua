@@ -1174,7 +1174,14 @@
                                 value: { dataType: opcua.DataType.ExtensionObject, value: extVar },
                                 // value: { dataType: DataType.StructureDefinition, value: extVar },
                             });
-                            var newext = { "payload" : { "messageType" : "Variable", "variableName": browseName, "nodeId": extNode.nodeId.toString() }};
+                            var newext = { 
+                                "payload" : { 
+                                "messageType" : "Variable", 
+                                "variableName": browseName, 
+                                "nodeId": extNode.nodeId.toString()
+                             }, 
+                             "displayName": displayName
+                             };
                             node.send(newext);
                             // TODO get/set functions and other tricks as with normal scalar
                             return opcua.StatusCodes.Good;
@@ -1197,6 +1204,9 @@
                             permissions = msg.permissions;
                         }
                         verbose_log(chalk.yellow("Using access level: ") + chalk.cyan(accessLevel) + chalk.yellow(" user access level: ") + chalk.cyan(userAccessLevel) + chalk.yellow(" permissions: ") + chalk.cyan(JSON.stringify(permissions)));
+                        
+                        // for displayName on change state
+                        const finalDisplayName = displayName || browseNameTopic || browseName;
                         var newVAR = namespace.addVariable({
                             organizedBy: parentNode , //addressSpace.findNode(parentFolder.nodeId),
                             nodeId: name,
@@ -1289,15 +1299,38 @@
                                     // }
                                     // variables[variableId] = Object.assign(variables[variableId], opcuaBasics.build_new_value_by_datatype(variant.dataType.toString(), variant.value));
                                     verbose_log(chalk.yellow("Server variable: ") + chalk.cyan(variables[variableId]) + chalk.yellow(" browseName: ") + chalk.cyan(ns) + ":" + chalk.cyan(browseName));
-                                    var SetMsg = { "payload" : { "messageType" : "Variable", "variableName": ns + ":" + browseName, "variableValue": variables[variableId] }};
+                                    var SetMsg = {
+                                         "payload" : { 
+                                            "messageType" : "Variable", 
+                                            "variableName": ns + ":" + browseName, 
+                                            "variableValue": variables[variableId] 
+                                            },
+                                            "displayName": finalDisplayName
+                                        };
                                     verbose_log(chalk.yellow("msg Payload: ") + chalk.cyan(JSON.stringify(SetMsg)));
                                     node.send(SetMsg);
                                     return opcua.StatusCodes.Good;
                                 }
                             }
                         });
-                  
-                        var newvar = { "payload" : { "messageType" : "Variable", "variableName": ns + ":" + browseName, "nodeId": newVAR.nodeId.toString() }};
+                        if (msg.variableValue) {
+                            var value = msg.variableValue;
+                            if (msg.variableValue === "true" || msg.variableValue === true || msg.variableValue === 1) {
+                                value = true;
+                            }
+                            if (msg.variableValue === "false" || msg.variableValue === false || msg.variableValue === 0) {
+                                value = false;
+                            }
+                            variables[variableId] = value;
+                        }
+                        var newvar = { "payload" : { 
+                            "messageType" : "Variable", 
+                            "variableName": ns + ":" + browseName,
+                             "nodeId": newVAR.nodeId.toString(),
+                             "variableValue":  variables[variableId] 
+                            },
+                            "displayName": displayName
+                        };
                         node.send(newvar);
 
                     }
@@ -1672,7 +1705,14 @@
                             var variableNode = addressSpace.findNode(id);
                             node.debug("NodeId:" + variableNode.nodeId + " NodeClass: " + variableNode.nodeClass);
                             if (variableNode.nodeClass == opcua.NodeClass.Variable) {
-                                var newext = {"payload": {"messageType":"Variable", "variableName":browseName.toString(), "nodeId":id.toString()}};
+                                var newext = {
+                                    "payload": {
+                                        "messageType":"Variable", 
+                                        "variableName":browseName.toString(), 
+                                        "nodeId":id.toString()
+                                    },
+                                    "displayName": displayName
+                                    };
                                 node.send(newext);
                                 bindCallbacks(variableNode, browseName.toString());
                             }
@@ -1722,7 +1762,14 @@
                                     variable.value = new opcua.DataValue(new opcua.Variant({ dataType: variable.DataType, value: variant.value}),
                                                                         opcua.StatusCodes.Good);
                                     // Report new value to server node output
-                                    var SetMsg = { "payload" : { "messageType" : "Variable", "variableName": browseName, "variableValue": variables[variableId] }};
+                                    var SetMsg = { "payload" : 
+                                        { 
+                                            "messageType" : "Variable", 
+                                            "variableName": browseName, 
+                                            "variableValue": variables[variableId] 
+                                        },
+                                        "displayName": displayName
+                                    };
                                     verbose_log("msg Payload:" + JSON.stringify(SetMsg));
                                     node.send(SetMsg);
                                     return opcua.StatusCodes.Good;
