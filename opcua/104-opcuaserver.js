@@ -1315,11 +1315,13 @@
                         });
                         if (msg.variableValue) {
                             var value = msg.variableValue;
-                            if (msg.variableValue === "true" || msg.variableValue === true || msg.variableValue === 1) {
-                                value = true;
-                            }
-                            if (msg.variableValue === "false" || msg.variableValue === false || msg.variableValue === 0) {
-                                value = false;
+                            if (datatype == "Boolean"){
+                                if (msg.variableValue === "true" || msg.variableValue === true || msg.variableValue === 1) {
+                                    value = true;
+                                }
+                                else if (msg.variableValue === "false" || msg.variableValue === false || msg.variableValue === 0) {
+                                    value = false;
+                                }
                             }
                             variables[variableId] = value;
                         }
