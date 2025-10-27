@@ -290,13 +290,24 @@
             if (node.registerToDiscovery === true) {
                 registerMethod = opcua.RegisterServerMethod.LDS;
             }
+            //2025.10.27, config port with env. variable
+            let resolvedPort = n.port;
+            if (typeof resolvedPort === "string") {
+                let match = resolvedPort.match(/^\$\((.+)\)$/);
+                if (match && process.env[match[1]]) {
+                    resolvedPort = process.env[match[1]];
+                }
+            }   
+            
             node.server_options = {
                 serverCertificateManager,
                 userCertificateManager,
                 securityPolicies: policies,
                 securityModes: modes,
                 allowAnonymous: n.allowAnonymous,
-                port: parseInt(n.port),
+                // 2025.10.27, config port with env. variable
+                // port: parseInt(n.port),
+                port: parseInt(resolvedPort),
                 resourcePath: "/" + node.endpoint, // Option was missing / can be 
                 // maxAllowedSessionNumber: 1000,
                 maxConnectionsPerEndpoint: maxConnectionsPerEndpoint,
