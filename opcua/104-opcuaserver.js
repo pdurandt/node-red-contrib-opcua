@@ -290,24 +290,22 @@
             if (node.registerToDiscovery === true) {
                 registerMethod = opcua.RegisterServerMethod.LDS;
             }
-            //2025.10.27, config port with env. variable
-            let resolvedPort = n.port;
-            if (typeof resolvedPort === "string") {
-                let match = resolvedPort.match(/^\$\((.+)\)$/);
-                if (match && process.env[match[1]]) {
-                    resolvedPort = process.env[match[1]];
-                }
-            }   
-            
+            //2025.10.27, config in settings.js opcUaServer.port
+            let resolvedPort =  (RED.settings.opcUaServer)  ? 
+                    parseInt(RED.settings.opcUaServer.port): parseInt(n.port); 
+              
+            if (isNaN(resolvedPort)) {
+                resolvedPort = 4840;
+            }
             node.server_options = {
                 serverCertificateManager,
                 userCertificateManager,
                 securityPolicies: policies,
                 securityModes: modes,
                 allowAnonymous: n.allowAnonymous,
-                // 2025.10.27, config port with env. variable
+                // 2025.10.27,  config in settings.js projets.opcuaPort
                 // port: parseInt(n.port),
-                port: parseInt(resolvedPort),
+                port: resolvedPort,
                 resourcePath: "/" + node.endpoint, // Option was missing / can be 
                 // maxAllowedSessionNumber: 1000,
                 maxConnectionsPerEndpoint: maxConnectionsPerEndpoint,
@@ -351,6 +349,8 @@
                 isAuditing: false,
                 registerServerMethod: registerMethod
             };
+             
+            console.log(`--------------- - [OPC-UA Node] Server starting on port: ${resolvedPort}`);
             node.server_options.serverInfo = {
                 applicationName: { text: "Node-RED OPCUA" }
             };
